@@ -12,6 +12,7 @@ import {
   resetAttempt,
   declineAttempt,
   endExamWithFailure,
+  updateAttemptStatus,
 } from './api';
 import { isEmpty } from '../helpers';
 import {
@@ -256,9 +257,16 @@ export function stopExam() {
       return;
     }
 
-    await updateAttemptAfter(
-      exam.course_id, exam.content_id, stopAttempt(attemptId),
-    )(dispatch);
+    const res = await updateAttemptStatus(attemptId, 'check_questions_completed');
+    if (res.result) {
+      await updateAttemptAfter(
+        exam.course_id, exam.content_id, stopAttempt(attemptId),
+      )(dispatch);
+    } else if (window.confirm(`You have not completed ${res.unanswered_count} of ${res.problems_count} questions in the exam. Are you sure you want to end your exam?`)) {
+      await updateAttemptAfter(
+        exam.course_id, exam.content_id, stopAttempt(attemptId),
+      )(dispatch);
+    }
   };
 }
 
